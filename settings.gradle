@@ -1,0 +1,5 @@
+rootProject.name='LivingRoom'
+include ':app'
+include ':livingroom'
+include ':LivingRoom-annotations'
+include ':LivingRoom-compiler'
