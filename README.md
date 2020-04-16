@@ -1,9 +1,9 @@
 # LivingRoom
-LivingRoom is a just another layer above the Android Room persistence library to generate all the boilerplate DAOs and repositories.
+LivingRoom is just another layer above the Android Room persistence library to generate all the boilerplate DAOs and repositories.
 [![](https://jitpack.io/v/msbelaid/LivingRoom.svg)](https://jitpack.io/#msbelaid/LivingRoom)
 
 # Install
-Add the following to your `build.gradle` (root)
+Add the following lines to your `build.gradle` (root)
 
 ```
 allprojects {
