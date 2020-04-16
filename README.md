@@ -22,6 +22,18 @@ dependencies {
     ...
 }
 ```
+*LivingRoom* works only in java 1.8, so you should maybe add this to your `build.gradle` (root)
+```
+android {
+    ...
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+}
+
+```
 # How to use
 Just add `@Crudable` annotation to yout entity and extend `BasicEntity`
 All the boilerplate code of Daos, Repositories and ViewModels will be generated for you.
