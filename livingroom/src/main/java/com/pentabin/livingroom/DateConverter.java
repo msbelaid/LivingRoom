@@ -1,4 +1,4 @@
-package com.pentabin.livingroom.compiler;
+package com.pentabin.livingroom;
 
 import androidx.room.TypeConverter;
 

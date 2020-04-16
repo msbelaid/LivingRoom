@@ -14,7 +14,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import static com.pentabin.livingroom.compiler.CrudableProcessor.getLiveDataType;
-import static com.pentabin.livingroom.compiler.CrudableProcessor.suffixDao;
+import static com.pentabin.livingroom.compiler.CrudableProcessor.SUFFIX_DAO;
 
 public class DaoClassGenerator {
     private final String entityClassName;
@@ -26,7 +26,7 @@ public class DaoClassGenerator {
         this.entityClass = entityClass;
         this.entityClassName = entityClass.getSimpleName().toString();
         this.entityTypeName = TypeName.get(entityClass.asType());
-        this.daoClassName = entityClass.getSimpleName().toString() + suffixDao;
+        this.daoClassName = entityClass.getSimpleName().toString() + SUFFIX_DAO;
     }
 
     private MethodSpec generateMethod(CrudMethod method){

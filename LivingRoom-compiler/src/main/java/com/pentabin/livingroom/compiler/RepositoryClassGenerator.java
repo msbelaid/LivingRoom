@@ -16,8 +16,8 @@ import javax.lang.model.element.TypeElement;
 
 import static com.pentabin.livingroom.compiler.CrudableProcessor.dbClassName;
 import static com.pentabin.livingroom.compiler.CrudableProcessor.getLiveDataType;
-import static com.pentabin.livingroom.compiler.CrudableProcessor.suffixDao;
-import static com.pentabin.livingroom.compiler.CrudableProcessor.suffixRepo;
+import static com.pentabin.livingroom.compiler.CrudableProcessor.SUFFIX_DAO;
+import static com.pentabin.livingroom.compiler.CrudableProcessor.SUFFIX_REPO;
 
 public class RepositoryClassGenerator {
     private TypeElement entityClass;
@@ -31,7 +31,7 @@ public class RepositoryClassGenerator {
         this.entityClass = entityClass;
         this.entityClassName = entityClass.getSimpleName().toString();
         this.entityTypeName = TypeName.get(entityClass.asType());
-        this.daoClassName = entityClass.getSimpleName().toString() + suffixDao;
+        this.daoClassName = entityClass.getSimpleName().toString() + SUFFIX_DAO;
         this.packageName = CrudableProcessor.packageName;
     }
 
@@ -146,6 +146,7 @@ public class RepositoryClassGenerator {
         final String listField = entityClassName.toLowerCase() + "List";
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.app", "Application"), "app")
                 .addStatement("$N = $T.getDatabase(app)", dbField, ClassName.get(packageName, dbClassName))
                 .addStatement("$N = $N.$N()", daoClassName.toLowerCase(), dbField, daoClassName.toLowerCase())
@@ -159,7 +160,7 @@ public class RepositoryClassGenerator {
 
         List<CrudMethod> methodList = CrudMethod.basicCrudMethods(entityTypeName);
 
-        TypeSpec.Builder repositoryClass = TypeSpec.classBuilder(entityClassName + suffixRepo)
+        TypeSpec.Builder repositoryClass = TypeSpec.classBuilder(entityClassName + SUFFIX_REPO)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(ClassName.get(packageName, dbClassName), dbField, Modifier.PRIVATE)
                 .addField(ClassName.get(packageName, daoClassName), (daoClassName).toLowerCase(), Modifier.PRIVATE)

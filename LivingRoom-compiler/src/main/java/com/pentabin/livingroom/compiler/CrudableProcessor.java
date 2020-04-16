@@ -50,8 +50,9 @@ public class CrudableProcessor extends AbstractProcessor {
     private List<TypeSpec> daoClasses;
     private List<TypeName> entities;
     static  String packageName; //TODO
-    static final String suffixDao = "Dao";
-    static final String suffixRepo = "Repository";
+    static final String SUFFIX_DAO = "Dao";
+    static final String SUFFIX_REPO = "Repository";
+    static final String SUFFIX_VM = "ViewModel";
     static final String dbClassName = "CustomRoomDatabase";
 
 
@@ -102,6 +103,7 @@ public class CrudableProcessor extends AbstractProcessor {
         entities.add(TypeName.get(clazz.asType()));
         generateDaoClass(clazz);
         generateRepositoryClass(clazz);
+        generateViewModelClass(clazz);
     }
 
 
@@ -111,74 +113,20 @@ public class CrudableProcessor extends AbstractProcessor {
                 .build();
 
         Filer filer = processingEnv.getFiler();
-        javaFile.writeTo(System.out);
+        //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
     }
 
-    private void generateDaoClass2(TypeElement clazz) throws IOException {
-        String className = clazz.getSimpleName().toString();
-        MethodSpec insert = MethodSpec.methodBuilder("insert")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(Insert.class)
-                .returns(long.class)
-                .addParameter(TypeName.get(clazz.asType()), "item")
-                .build();
-
-        MethodSpec update = MethodSpec.methodBuilder("update")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(Update.class)
-                .addParameter(TypeName.get(clazz.asType()), "item")
-                .build();
-
-        MethodSpec delete = MethodSpec.methodBuilder("delete")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(Delete.class)
-                .addParameter(TypeName.get(clazz.asType()), "item")
-                .build();
-
-        MethodSpec softDelete = MethodSpec.methodBuilder("archive")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(AnnotationSpec.builder(Query.class)
-                        .addMember("value", "\"UPDATE "
-                                + className
-                                + " SET isDeleted = 1 WHERE id = :itemId\"" // TODO add @SoftDelete annotation to fields + Take the name of id column from @PrimaryKey
-                            )
-                        .build())
-                .addParameter(long.class, "itemId")
-                .build();
-
-        MethodSpec getAll = MethodSpec.methodBuilder("getAll")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(AnnotationSpec.builder(Query.class)
-                        .addMember("value", "\"SELECT * FROM "
-                                + className
-                                + " WHERE isDeleted = 0\"") // TODO isDeleted
-                        .build())
-                .returns(getLiveDataType(TypeName.get(clazz.asType())))
-                .build();
-
-        System.out.println("Generating the method " + getAll);
-
-        TypeSpec daoClass = TypeSpec.interfaceBuilder(className+suffixDao)
-                .addModifiers(Modifier.PUBLIC)
-                .addAnnotation(Dao.class)
-                .addMethod(insert)
-                .addMethod(update)
-                .addMethod(delete)
-                .addMethod(softDelete)
-                .addMethod(getAll)
-                .build();
-        System.out.println("Generating the class " + className+suffixDao);
-        daoClasses.add(daoClass);
-
-        JavaFile javaFile = JavaFile.builder(packageName, daoClass) // TODO make dynamic
+    private void generateViewModelClass(TypeElement clazz) throws IOException {
+        ViewModelClassGenerator viewModel = new ViewModelClassGenerator(clazz);
+        JavaFile javaFile = JavaFile.builder(packageName, viewModel.generate())
                 .build();
 
         Filer filer = processingEnv.getFiler();
-        javaFile.writeTo(System.out);
+        //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
-
     }
+
 
     static ParameterizedTypeName getLiveDataType(TypeName clazz){
         ClassName liveDataClass = ClassName.get("androidx.lifecycle", "LiveData");
@@ -194,7 +142,7 @@ public class CrudableProcessor extends AbstractProcessor {
                 .build();
 
         Filer filer = processingEnv.getFiler();
-        javaFile.writeTo(System.out);
+        //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
     }
 
@@ -210,9 +158,9 @@ public class CrudableProcessor extends AbstractProcessor {
             listEntities.append(entityClassName).append(".class, ");
             listDaoMethods.add(
                     MethodSpec.methodBuilder(
-                            (entityClassName+suffixDao).toLowerCase())
+                            (entityClassName+ SUFFIX_DAO).toLowerCase())
                             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                            .returns(ClassName.get(packageName, entityClassName+suffixDao))
+                            .returns(ClassName.get(packageName, entityClassName+ SUFFIX_DAO))
                             .build());
         }
 
@@ -250,7 +198,7 @@ public class CrudableProcessor extends AbstractProcessor {
                         .addMember("exportSchema", "false")
                         .build())
                 .addAnnotation(AnnotationSpec.builder(TypeConverters.class)
-                        .addMember("value", "$T.class", ClassName.get(DateConverter.class) )
+                        .addMember("value", "$T.class", ClassName.get("com.pentabin.livingroom", "DateConverter") )
                         .build())
                 .addField(instance)
                 .addMethods(listDaoMethods)
@@ -260,67 +208,7 @@ public class CrudableProcessor extends AbstractProcessor {
         Filer filer = processingEnv.getFiler();
         JavaFile javaFile = JavaFile.builder(packageName, dbClass)
                 .build();
-        //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
-    }
-
-    private void writeBuilderFile(
-            String className)
-            throws IOException {
-
-        String packageName = null;
-        int lastDot = className.lastIndexOf('.');
-        if (lastDot > 0) {
-            packageName = className.substring(0, lastDot);
-        }
-
-        String simpleClassName = className.substring(lastDot + 1);
-        String builderClassName = className + suffixDao;
-        String builderSimpleClassName = builderClassName
-                .substring(lastDot + 1);
-
-        JavaFileObject builderFile = processingEnv.getFiler()
-                .createSourceFile(builderClassName);
-
-        try (PrintWriter out = new PrintWriter(builderFile.openWriter())) {
-
-            if (packageName != null) {
-                out.print("package ");
-                out.print(packageName);
-                out.println(";");
-                out.println();
-            }
-            out.println("import androidx.room.Dao;");
-            out.println("import androidx.room.Insert;\n");
-            out.println("import java.util.List;\n");
-            out.println("import androidx.lifecycle.LiveData;\n");
-            out.println("import androidx.room.Query;\n");
-            out.println("@Dao");
-            out.print("public interface ");
-            out.print(builderSimpleClassName);
-            out.println(" {");
-            out.println();
-
-/*            out.print("    private ");
-            out.print(simpleClassName);
-            out.print(" object = new ");
-            out.print(simpleClassName);
-            out.println("();");
-            out.println();
-*/
-            out.print("@Insert\n    public ");
-            out.print("long");
-            out.println(" insert("+ simpleClassName + " i);");
-            out.print("@Query(\"SELECT * FROM " + simpleClassName + "\")\n    public LiveData<List<" + simpleClassName + ">> ");
-            out.println(" getAll();");
-
-            //out.println("        return object;");
-            //out.println("    }");
-            out.println();
-
-
-            out.println("}");
-        }
     }
 
 }
