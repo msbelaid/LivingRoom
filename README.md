@@ -1,5 +1,6 @@
 # LivingRoom
-LivingRoom is just another layer above the Android Room persistence library to generate all the boilerplate DAOs and repositories.
+LivingRoom is another layer above the Android Room persistence library to generate all the boilerplate DAOs, Repositories and ViewModels.
+
 [![](https://jitpack.io/v/msbelaid/LivingRoom.svg)](https://jitpack.io/#msbelaid/LivingRoom)
 
 # Install
@@ -13,7 +14,7 @@ allprojects {
     }
 }
 ```
-And these two lines to yout `build.gradle` (app)
+And these two lines to your `build.gradle` (app)
 ```
 dependencies {
     ...
@@ -35,7 +36,7 @@ android {
 
 ```
 # How to use
-Just add `@Crudable` annotation to yout entity and extend `BasicEntity`
+Just add `@Crudable` annotation to your entity and extend `BasicEntity`
 All the boilerplate code of Daos, Repositories and ViewModels will be generated for you.
 
 ```java
@@ -58,13 +59,9 @@ For example to use the ViewModel in your MainActivity just do the following:
 ```java
 public class MainActivity extends AppCompatActivity {
     NoteViewModel viewModel;
-    TextView textView;
-    EditText title;
-    EditText content;
+    //...
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         //...
         viewModel = new ViewModelProvider(this).get(NoteViewModel.class);
         viewModel.getAll().observe(this, new Observer<List<Note>>() {
