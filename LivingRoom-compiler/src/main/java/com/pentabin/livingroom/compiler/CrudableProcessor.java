@@ -1,14 +1,9 @@
 package com.pentabin.livingroom.compiler;
 
-import androidx.room.Dao;
 import androidx.room.Database;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
 import androidx.room.TypeConverters;
-import androidx.room.Update;
-
 import com.pentabin.livingroom.annotations.Crudable;
+import com.pentabin.livingroom.annotations.Insertable;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -19,9 +14,9 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -36,19 +31,18 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.tools.JavaFileObject;
-
 
 /**
  *
  */
 @SupportedAnnotationTypes(
-        "com.pentabin.livingroom.annotations.Crudable")
+        "com.pentabin.livingroom.annotations.Crudable") // TODO Add the others
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class CrudableProcessor extends AbstractProcessor {
+public class CrudableProcessor extends AbstractProcessor {// TODO Rename to LivingRoom Processor
 
     private List<TypeSpec> daoClasses;
     private List<TypeName> entities;
+    private HashMap<TypeElement, EntityClass> entitiesList;
     static  String packageName; //TODO
     static final String SUFFIX_DAO = "Dao";
     static final String SUFFIX_REPO = "Repository";
@@ -61,22 +55,21 @@ public class CrudableProcessor extends AbstractProcessor {
         super.init(processingEnvironment);
         daoClasses = new ArrayList<>();
         entities = new ArrayList<>();
+        entitiesList = new HashMap<>();
     }
 
     public CrudableProcessor(){};
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
-        Collection<? extends Element> annotatedElements =
+        Collection<? extends Element> crudableElements =
                 env.getElementsAnnotatedWith(Crudable.class);
-        for (Element annotatedElement: annotatedElements) {
+        for (Element annotatedElement: crudableElements) {
             //TODO the class must be annotated with @Entity
             if (annotatedElement.getKind() != ElementKind.CLASS) {
                 System.err.println("Crudable can only be applied to a class");
             }
             try {
-                //writeBuilderFile(((TypeElement) annotatedElement).getQualifiedName().toString());
-                //generateDaoClass((TypeElement) annotatedElement);
                 generateCodeForEntity((TypeElement) annotatedElement);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -87,8 +80,36 @@ public class CrudableProcessor extends AbstractProcessor {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        parseCrudable(crudableElements);
+        Collection<? extends Element> insertableElements =
+                env.getElementsAnnotatedWith(Insertable.class);
+        parseInsertable(insertableElements);
         return false;
+    }
+
+    private void parseCrudable(Collection<? extends Element> crudableElements) {
+        for (Element e: crudableElements ) {
+            if (entitiesList.containsKey((TypeElement) e))
+                entitiesList.get(e).addCrudMethods();
+            else {
+                EntityClass entityClass = new EntityClass((TypeElement)e);
+                entityClass.addCrudMethods();
+                entitiesList.put((TypeElement) e, entityClass);
+            }
+        }
+    }
+
+    private void parseInsertable(Collection<? extends Element> insertableElements) {
+        for (Element e: insertableElements ) {
+            if (entitiesList.containsKey((TypeElement) e)) {
+                entitiesList.get(e).addInsertMethod();
+            }
+            else {
+                EntityClass entityClass = new EntityClass((TypeElement)e);
+                entityClass.addInsertMethod();
+                entitiesList.put((TypeElement) e, entityClass);
+            }
+        }
     }
 
     private void generateCodeForEntity(TypeElement clazz) throws IOException {

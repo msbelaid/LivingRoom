@@ -8,7 +8,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.lang.model.element.Modifier;
@@ -78,53 +77,29 @@ public class RepositoryClassGenerator {
         return asyncTask;
     }
 
-    private CrudMethod insertMethod() {
-        CrudMethod insertMethod = new CrudMethod("insert", entityTypeName, TypeName.get(Long.class));
-        insertMethod.setPreCode(
-                CodeBlock.builder()
-                        .addStatement("item.setCreated_at(new $T())", Date.class)//TODO CreatedAt!!
-                        .build()
-        );
-        return insertMethod;
-    }
-
-    private CrudMethod updateMethod(){
-        CrudMethod updateMethod = new CrudMethod("update", entityTypeName, TypeName.get(Void.class));
-        updateMethod.setPreCode(CodeBlock.builder()
-                .addStatement("item.setUpdated_at(new $T())", Date.class) // TODO Updated At field static final
-                .build());
-        return updateMethod;
-    }
-
-    private CrudMethod softDeleteMethod(){
-        CrudMethod updateMethod = new CrudMethod("archive", TypeName.get(Long.class), TypeName.get(Void.class));
-        updateMethod.setPreCode(CodeBlock.builder()
-                .addStatement("item.setUpdated_at(new $T())", Date.class) // TODO Deleted At field static final
-                .build());
-        return updateMethod;
-    }
-
-    private CrudMethod deleteMethod(){
-        CrudMethod updateMethod = new CrudMethod("delete", entityTypeName, TypeName.get(Void.class));
-        return updateMethod;
-    }
-
     private CodeBlock curdMethodCodeBlock(CrudMethod method) {
         CodeBlock.Builder innerCode = CodeBlock.builder();
 
-        if (method.isReturnVoid())
-            innerCode = innerCode
-                    .addStatement("new $N().execute($N)",
-                            asyncTaskClassName(method),
-                            method.isParamVoid() ? "" : "item"); // TODO Maybe pass Dao as parameter;
-        else innerCode = CodeBlock.builder()
-                .beginControlFlow("try")
-                .addStatement("return new $N().execute($N).get()", asyncTaskClassName(method), method.isParamVoid() ? "" : "item")
-                .nextControlFlow("catch ($T e)", ClassName.get(Throwable.class))
-                .addStatement("e.printStackTrace()")
-                .endControlFlow()
-                .addStatement("return null");
-
+        if (method.isAsyncTask()) {
+            if (method.isReturnVoid())
+                innerCode = innerCode
+                        .addStatement("new $N().execute($N)",
+                                asyncTaskClassName(method),
+                                method.isParamVoid() ? "" : "item"); // TODO Maybe pass Dao as parameter;
+            else innerCode = CodeBlock.builder()
+                    .beginControlFlow("try")
+                    .addStatement("return new $N().execute($N).get()", asyncTaskClassName(method), method.isParamVoid() ? "" : "item")
+                    .nextControlFlow("catch ($T e)", ClassName.get(Throwable.class))
+                    .addStatement("e.printStackTrace()")
+                    .endControlFlow()
+                    .addStatement("return null");
+        } else {
+            innerCode = innerCode.addStatement("$N $N.$N($N)",
+                    method.isReturnVoid() ? "" : "return",
+                    daoClassName.toLowerCase(),
+                    method.getMethodName(),
+                    method.isParamVoid() ? "" : "item");
+        }
         return innerCode.build();
     }
 

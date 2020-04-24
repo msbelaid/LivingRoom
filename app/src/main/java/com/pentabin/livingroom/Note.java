@@ -4,8 +4,9 @@ import androidx.room.Entity;
 
 import com.pentabin.livingroom.annotations.Crudable;
 import com.pentabin.livingroom.BasicEntity;
+import com.pentabin.livingroom.annotations.Insertable;
 
-
+@Insertable
 @Crudable
 @Entity
 public class Note extends BasicEntity {

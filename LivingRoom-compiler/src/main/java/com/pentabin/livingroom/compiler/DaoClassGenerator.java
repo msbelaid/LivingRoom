@@ -31,8 +31,15 @@ public class DaoClassGenerator {
 
     private MethodSpec generateMethod(CrudMethod method){
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(method.getMethodName())
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(method.getAnnotation());
+                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT);
+
+        if (method.getAnnotationValue() == null)
+            methodBuilder.addAnnotation(method.getAnnotation());
+        else
+            methodBuilder.addAnnotation(AnnotationSpec.builder(method.getAnnotation())
+                    .addMember("value", method.getAnnotationValue())
+                    .build());
+
         if (!method.isParamVoid())
             methodBuilder.addParameter(method.getParamType(), "item");
 

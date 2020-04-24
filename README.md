@@ -79,3 +79,10 @@ public class MainActivity extends AppCompatActivity {
     // ...
 }
 ```
+
+# Todo
+* Add database class
+* Migrations in the database class
+* Add exceptions
+* Display compile errors 
+* Tests automation

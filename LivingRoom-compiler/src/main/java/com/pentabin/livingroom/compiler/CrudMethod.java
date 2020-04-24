@@ -2,14 +2,18 @@ package com.pentabin.livingroom.compiler;
 
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.Query;
 import androidx.room.Update;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static com.pentabin.livingroom.compiler.CrudableProcessor.getLiveDataType;
 
 public class CrudMethod {
     private boolean isReturnVoid;
@@ -87,11 +91,13 @@ public class CrudMethod {
         methods.add(insertMethod(entityTypeName));
         methods.add(updateMethod(entityTypeName));
         methods.add(deleteMethod(entityTypeName));
+        methods.add(softDeleteMethod(entityTypeName));
+        methods.add(selectMethod(entityTypeName, "isDeleted = 0"));
 
         return methods;
     }
 
- private static CrudMethod insertMethod(TypeName entityTypeName) {
+     static CrudMethod insertMethod(TypeName entityTypeName) {
         CrudMethod insertMethod = new CrudMethod("insert", entityTypeName, TypeName.get(Long.class));
         insertMethod.setPreCode(
                 CodeBlock.builder()
@@ -120,27 +126,38 @@ public class CrudMethod {
         return updateMethod;
     }
 
-    private CrudMethod softDeleteMethod(TypeName entityTypeName){
-        CrudMethod softDeleteMethod = new CrudMethod("archive", TypeName.get(Long.class), TypeName.get(Void.class));
+    private static CrudMethod softDeleteMethod(TypeName entityTypeName){
+        CrudMethod softDeleteMethod = new CrudMethod("archive", entityTypeName, TypeName.get(Void.class));
         softDeleteMethod.setPreCode(CodeBlock.builder()
                 .addStatement("item.setUpdated_at(new $T())", Date.class) // TODO Deleted At field static final
+                .addStatement("item.setDeleted($N)", "true")
                 .build());
+        softDeleteMethod.isAsyncTask = true;
+        softDeleteMethod.annotation = Update.class;
         return softDeleteMethod;
-/*        MethodSpec softDelete = MethodSpec.methodBuilder("archive")
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .addAnnotation(AnnotationSpec.builder(Query.class)
-                        .addMember("value", "\"UPDATE "
-                                + className
-                                + " SET isDeleted = 1 WHERE id = :itemId\"" // TODO add @SoftDelete annotation to fields + Take the name of id column from @PrimaryKey
-                        )
-                        .build())
-                .addParameter(long.class, "itemId")
-                .build();*/
 
     }
 
-    private CrudMethod selectMethod(TypeName entityTypeName) {
-        return null;
+    private static CrudMethod selectMethod(TypeName entityTypeName, String where) {
+        String tableName = entityTypeName.toString();
+        int lastDot = tableName.lastIndexOf(".");
+        tableName = tableName.substring(lastDot + 1);
+
+        CrudMethod selectMethod = new CrudMethod("retrieveAll", TypeName.get(Void.class), getLiveDataType(entityTypeName));
+        selectMethod.isAsyncTask = false;
+        selectMethod.annotation = Query.class;
+        selectMethod.annotationValue = "\"SELECT * FROM "+ tableName + " WHERE " + where + "\"";
+        return selectMethod;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof CrudMethod) {
+            return this.methodName.equals(((CrudMethod) o).getMethodName());
+        }
+        return super.equals(o);
+    }
 }
