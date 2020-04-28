@@ -13,15 +13,21 @@ import com.squareup.javapoet.TypeName;
 import java.util.Iterator;
 import java.util.Map;
 
-public class LiveMethod extends CrudMethod {
+public class LiveMethod extends LivingroomMethod {
     private String where;
     private boolean isLiveData; // TODO can either be live or not
+    private boolean isList;
 
     public LiveMethod(String methodName, String where, EntityClass entityClass, String[] params) {
+        this(methodName, where, entityClass, params, true);
+    }
+
+    public LiveMethod(String methodName, String where, EntityClass entityClass, String[] params, boolean isList) {
         super(entityClass, methodName);
-        this.setReturnType(getLiveDataType(entityClass.getTypeName()));
-        this.setAnnotation(Query.class);
+        this.isList = isList;
         this.where = where;
+        this.setReturnType(getLiveDataType());
+        this.setAnnotation(Query.class);
 
         if (params != null && params.length>=1) {
             for (String s : params) {
@@ -91,11 +97,12 @@ public class LiveMethod extends CrudMethod {
         return builder;
     }
 
-    public static ParameterizedTypeName getLiveDataType(TypeName clazz){ // TODO put it on utils + One or List
+    public ParameterizedTypeName getLiveDataType(){
         ClassName liveDataClass = ClassName.get("androidx.lifecycle", "LiveData");
         ClassName listClass = ClassName.get("java.util", "List");
-        ParameterizedTypeName returnType = ParameterizedTypeName.get(liveDataClass,
-                ParameterizedTypeName.get(listClass, clazz));
+        ParameterizedTypeName returnType = isList?
+                ParameterizedTypeName.get(liveDataClass, ParameterizedTypeName.get(listClass, getEntityClass().getTypeName()))
+                : ParameterizedTypeName.get(liveDataClass,getEntityClass().getTypeName());
         return returnType;
     }
 
@@ -110,4 +117,7 @@ public class LiveMethod extends CrudMethod {
         return parameters.toString();
     }
 
+    public void setList(boolean list) {
+        isList = list;
+    }
 }

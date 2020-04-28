@@ -11,7 +11,7 @@ import java.util.Map;
 
 import javax.lang.model.element.Modifier;
 
-public abstract class CrudMethod {
+public abstract class LivingroomMethod {
     private String methodName;
     private CodeBlock preCode;
     private Class annotation;
@@ -27,7 +27,7 @@ public abstract class CrudMethod {
     public static final String GET_BY_ID = "getById";
     public static final String CRUD = "CRUD";
 
-    public CrudMethod(EntityClass entityClass, String methodName) {
+    public LivingroomMethod(EntityClass entityClass, String methodName) {
         this.entityClass = entityClass;
         this.methodName = methodName;
         this.params = new HashMap<>();
@@ -47,6 +47,10 @@ public abstract class CrudMethod {
 
     public void setPreCode(CodeBlock preCode) {
         this.preCode = preCode;
+    }
+
+    public CodeBlock getPreCode() {
+        return preCode;
     }
 
     public Class getAnnotation() {
@@ -69,15 +73,25 @@ public abstract class CrudMethod {
         return entityClass;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (o instanceof CrudMethod) {
-            return this.methodName.equals(((CrudMethod) o).getMethodName());
+        if (o instanceof LivingroomMethod) {
+            return this.methodName.equals(((LivingroomMethod) o).getMethodName());
+        }
+
+        if (o instanceof String) {
+            return this.methodName.equals(o);
         }
         return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return methodName.hashCode();
     }
 
     void addParam(String type, String name) {

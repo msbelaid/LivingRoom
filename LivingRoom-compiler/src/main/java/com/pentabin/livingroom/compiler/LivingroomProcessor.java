@@ -10,7 +10,7 @@ import com.pentabin.livingroom.annotations.SelectableById;
 import com.pentabin.livingroom.annotations.SelectableWhere;
 import com.pentabin.livingroom.annotations.SelectableWheres;
 import com.pentabin.livingroom.annotations.Updatable;
-import com.pentabin.livingroom.compiler.methods.CrudMethod;
+import com.pentabin.livingroom.compiler.methods.LivingroomMethod;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -21,7 +21,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,9 +41,10 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_ALL;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_BY_ID;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.INSERT;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.CRUD;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_ALL;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_BY_ID;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.INSERT;
 
 /**
  *
@@ -57,6 +57,8 @@ import static com.pentabin.livingroom.compiler.methods.CrudMethod.INSERT;
                 "com.pentabin.livingroom.annotations.Updatable",
                 "com.pentabin.livingroom.annotations.Archivable",
                 "com.pentabin.livingroom.annotations.SelectableWhere",
+                "com.pentabin.livingroom.annotations.SelectableAll",
+                "com.pentabin.livingroom.annotations.SelectableById",
                 "com.pentabin.livingroom.annotations.SelectableWheres",
 
 
@@ -66,7 +68,7 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
 
     private List<TypeName> entities;
     private HashMap<TypeElement, EntityClass> entitiesList;
-    static  String packageName; //TODO
+    static  String packageName; //TODO fro the database
     static final String SUFFIX_DAO = "Dao";
     static final String dbClassName = "CustomRoomDatabase";
 
@@ -95,13 +97,14 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
                 System.err.println("The annotated class must inherit from BasicEntity");
         }
 
-        parseCrudable(crudableElements);
+        parseCrudable(env);
         parseInsertable(env);
         parseDeletable(env);
         parseUpdatable(env);
         parseArchivable(env);
         parseSelectable(env);
         parseSelectableAll(env);
+        parseSelectableById(env);
 
         for (Map.Entry<TypeElement, EntityClass> e: entitiesList.entrySet()) {
             try {
@@ -132,10 +135,10 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
         }
     }
 
-    private void parseCrudable(Collection<? extends Element> crudableElements) { // TODO change like others do
-        //parseAnnotation(crudableElements, new Cr);
-        // TODO Crudable.class
-    }
+    private void parseCrudable(RoundEnvironment env) { // TODO change like others do
+        Collection<? extends Element> elements =
+                env.getElementsAnnotatedWith(Crudable.class);
+        parseAnnotation(elements, CRUD);    }
 
     private void parseInsertable(RoundEnvironment env) {
         Collection<? extends Element> insertableElements =
@@ -146,20 +149,20 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
     private void parseDeletable(RoundEnvironment env) {
         Collection<? extends Element> deletableElements =
                 env.getElementsAnnotatedWith(Deletable.class);
-        parseAnnotation(deletableElements, CrudMethod.DELETE);
+        parseAnnotation(deletableElements, LivingroomMethod.DELETE);
     }
 
     private void parseUpdatable(RoundEnvironment env) {
         Collection<? extends Element> updatableElements =
                 env.getElementsAnnotatedWith(Updatable.class);
-        parseAnnotation(updatableElements, CrudMethod.UPDATE);
+        parseAnnotation(updatableElements, LivingroomMethod.UPDATE);
     }
 
 
     private void parseArchivable(RoundEnvironment env) {
         Collection<? extends Element> archivableElements =
                 env.getElementsAnnotatedWith(Updatable.class);
-        parseAnnotation(archivableElements, CrudMethod.SOFT_DELETE);
+        parseAnnotation(archivableElements, LivingroomMethod.SOFT_DELETE);
     }
 
     private void parseSelectableAll(RoundEnvironment env) {
@@ -188,7 +191,7 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
                             a.params());
                 } else {
                     EntityClass entityClass = new EntityClass((TypeElement) e);
-                    entitiesList.get(e).addSelectMethod(a.methodName(),
+                    entityClass.addSelectMethod(a.methodName(),
                             a.where(),
                             a.params());
                     entitiesList.put((TypeElement) e, entityClass);
@@ -223,14 +226,6 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
         Filer filer = processingEnv.getFiler();
         //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
-    }
-
-    public static ParameterizedTypeName getLiveDataType(TypeName clazz){ // TODO put it on utils
-        ClassName liveDataClass = ClassName.get("androidx.lifecycle", "LiveData");
-        ClassName listClass = ClassName.get("java.util", "List");
-        ParameterizedTypeName returnType = ParameterizedTypeName.get(liveDataClass,
-                ParameterizedTypeName.get(listClass, clazz));
-        return returnType;
     }
 
     private void generateRepositoryClass(EntityClass clazz) throws IOException {

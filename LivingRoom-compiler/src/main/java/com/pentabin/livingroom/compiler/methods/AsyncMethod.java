@@ -9,13 +9,10 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import javax.lang.model.element.Modifier;
 
 // TODO this sub class has only one parameter (item of type Entity)
-public abstract class AsyncMethod extends CrudMethod {
+public abstract class AsyncMethod extends LivingroomMethod {
 
     private static final String asyncTaskSuffix = "AsyncTask";
     public static final String ITEM_PARAM = "item"; // TODO replace everywhere
@@ -54,13 +51,14 @@ public abstract class AsyncMethod extends CrudMethod {
     public MethodSpec.Builder generateRepositoryMethod(EntityClass entityClass) {
         MethodSpec.Builder builder = super.generateMethod();
         CodeBlock.Builder innerCode = CodeBlock.builder();
+        if (getPreCode() != null) builder.addCode(this.getPreCode());
 
         if (this.isReturnVoid())
-            innerCode = innerCode
+            innerCode
                     .addStatement("new $N().execute($N)",
                             asyncTaskClassName(entityClass),
                             this.hasParams() ? "item" : ""); // TODO Maybe pass Dao as parameter to AsyncTask;
-        else innerCode = CodeBlock.builder()
+        else innerCode
                 .beginControlFlow("try")
                 .addStatement("return new $N().execute($N).get()", asyncTaskClassName(entityClass), hasParams() ? "item" : "")
                 .nextControlFlow("catch ($T e)", ClassName.get(Throwable.class))
@@ -102,12 +100,11 @@ public abstract class AsyncMethod extends CrudMethod {
     public MethodSpec.Builder generateViewModelMethod(EntityClass entityClass) {
         MethodSpec.Builder builder =  super.generateMethod();
         CodeBlock.Builder innerCode = CodeBlock.builder();
-         innerCode = innerCode
-                    .addStatement("$N $N.$N($N)",
-                            this.isReturnVoid()?"":"return",
-                            entityClass.getRepositoryClassName().toLowerCase(),
-                            this.getMethodName(),
-                            this.hasParams() ? "item" : "");
+        innerCode.addStatement("$N $N.$N($N)",
+                this.isReturnVoid()?"":"return",
+                entityClass.getRepositoryClassName().toLowerCase(),
+                this.getMethodName(),
+                this.hasParams() ? "item" : "");
 
         builder.addCode(innerCode.build());
         return builder;

@@ -4,7 +4,7 @@ import androidx.room.Dao;
 
 import com.pentabin.livingroom.compiler.methods.ArchiveMethod;
 import com.pentabin.livingroom.compiler.methods.AsyncMethod;
-import com.pentabin.livingroom.compiler.methods.CrudMethod;
+import com.pentabin.livingroom.compiler.methods.LivingroomMethod;
 import com.pentabin.livingroom.compiler.methods.DeleteMethod;
 import com.pentabin.livingroom.compiler.methods.InsertMethod;
 import com.pentabin.livingroom.compiler.methods.LiveMethod;
@@ -21,14 +21,13 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import static com.pentabin.livingroom.compiler.LivingroomProcessor.dbClassName;
-import static com.pentabin.livingroom.compiler.LivingroomProcessor.getLiveDataType;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.CRUD;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.DELETE;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_ALL;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_BY_ID;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.INSERT;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.SOFT_DELETE;
-import static com.pentabin.livingroom.compiler.methods.CrudMethod.UPDATE;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.CRUD;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.DELETE;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_ALL;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_BY_ID;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.INSERT;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.SOFT_DELETE;
+import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.UPDATE;
 
 public class EntityClass {
     private static final String SUFFIX_DAO = "Dao";
@@ -42,7 +41,7 @@ public class EntityClass {
     private String daoClassName;
     private String repositoryClassName;
     private String viewModelClassName;
-    private Set<CrudMethod> methodsSet;
+    private Set<LivingroomMethod> methodsSet;
 
     public EntityClass(TypeElement entityClass) {
         this.typeElement = entityClass;
@@ -86,16 +85,11 @@ public class EntityClass {
         return viewModelClassName;
     }
 
-    public Set<? extends CrudMethod> getMethodsSet() {
+    public Set<? extends LivingroomMethod> getMethodsSet() {
         return methodsSet;
     }
 
-    public void setMethodsSet(Set<CrudMethod> methodsSet) {
-        this.methodsSet = methodsSet;
-    }
-
-    public void addMethod(CrudMethod method) {
-        System.err.println("Add Method --->" + method.getClass().getSimpleName());
+    public void addMethod(LivingroomMethod method) {
         methodsSet.add(method);
     }
 
@@ -114,12 +108,23 @@ public class EntityClass {
     private void addArchiveMethod() {
         methodsSet.add(new ArchiveMethod(this) );
     }
+
     private void addGetAllMethod() {
         methodsSet.add(new LiveMethod(GET_ALL, "isDeleted = 0", this, null) );
     }
 
+    private void addGetByIdMethod() {
+        String[] params = {"Long id"};
+        methodsSet.add(new LiveMethod(GET_BY_ID, "id = :id", this, params, false) );
+    }
+
     private void addCrudMethods() {
-        //methodsSet.addAll(CrudMethod.basicCrudMethods(typeName));
+        addInsertMethod(); // TODO display a warning if already exists
+        addUpdateMethod();
+        addDeleteMethod();
+        addArchiveMethod();
+        addGetAllMethod();
+        addGetByIdMethod();
     }
 
     public void addMethod(String type) {
@@ -143,7 +148,8 @@ public class EntityClass {
             case GET_ALL:
                 addGetAllMethod();
                 break;
-            case GET_BY_ID: //TODO
+            case GET_BY_ID:
+                addGetByIdMethod();
                 break;
             default:
         }
@@ -169,7 +175,7 @@ public class EntityClass {
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Dao.class);
 
-        for (CrudMethod m: this.getMethodsSet()) {
+        for (LivingroomMethod m: this.getMethodsSet()) {
             daoClass.addMethod(m.generateDaoMethod().build());
         }
         return daoClass.build();
@@ -191,9 +197,9 @@ public class EntityClass {
                 .addField(ClassName.get(this.getPackageName(), this.getDaoClassName()), this.getDaoClassName().toLowerCase(), Modifier.PRIVATE)
                 .addMethod(constructor);
 
-        for (CrudMethod m: this.getMethodsSet()) {
+        for (LivingroomMethod m: this.getMethodsSet()) {
             if (!m.hasParams())
-                repositoryClass.addField(getLiveDataType(this.getTypeName()), m.getMethodName()+"List", Modifier.PRIVATE);
+                repositoryClass.addField(((LiveMethod)m).getLiveDataType(), m.getMethodName()+"List", Modifier.PRIVATE);// TODO test if live or not????
             repositoryClass.addMethod(m.generateRepositoryMethod(this).build());
             if (m instanceof AsyncMethod) {
                 repositoryClass.addType(
@@ -216,9 +222,9 @@ public class EntityClass {
                 .addModifiers(Modifier.PUBLIC)
                 .addField(ClassName.get(this.getPackageName(), this.getRepositoryClassName()), this.getRepositoryClassName().toLowerCase(), Modifier.PRIVATE)
                 .addMethod(constructor);
-        for (CrudMethod m: this.getMethodsSet()) {
+        for (LivingroomMethod m: this.getMethodsSet()) {
             if (!m.hasParams()) {
-                viewModelClass.addField(getLiveDataType(this.getTypeName()), m.getMethodName()+"List", Modifier.PRIVATE);
+                viewModelClass.addField(((LiveMethod)m).getLiveDataType(), m.getMethodName()+"List", Modifier.PRIVATE);
             }
             viewModelClass.addMethod(m.generateViewModelMethod(this).build());
         }

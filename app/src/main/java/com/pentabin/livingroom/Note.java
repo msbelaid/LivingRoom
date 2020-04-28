@@ -2,21 +2,10 @@ package com.pentabin.livingroom;
 
 import androidx.room.Entity;
 
-import com.pentabin.livingroom.annotations.Archivable;
 import com.pentabin.livingroom.annotations.Crudable;
-import com.pentabin.livingroom.BasicEntity;
-import com.pentabin.livingroom.annotations.Deletable;
-import com.pentabin.livingroom.annotations.Insertable;
-import com.pentabin.livingroom.annotations.SelectableAll;
 import com.pentabin.livingroom.annotations.SelectableWhere;
-import com.pentabin.livingroom.annotations.Updatable;
 
-@Deletable
-@Insertable
-@Updatable
-@Archivable
-@SelectableAll
-//@Crudable
+@Crudable
 @SelectableWhere(methodName = "getArchived", where = "isDeleted = 1")
 @SelectableWhere(methodName = "getDateRange", where = "created_at > :from AND created_at < :to", params = {"java.util.Date from", "java.util.Date to"})
 @Entity
