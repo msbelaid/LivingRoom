@@ -20,7 +20,7 @@ import java.util.Set;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
-import static com.pentabin.livingroom.compiler.LivingroomProcessor.dbClassName;
+import static com.pentabin.livingroom.compiler.LivingRoomProcessor.dbClassName;
 import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.CRUD;
 import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.DELETE;
 import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_ALL;

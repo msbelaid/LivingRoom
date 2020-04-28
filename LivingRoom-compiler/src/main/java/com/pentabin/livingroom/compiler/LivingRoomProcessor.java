@@ -56,21 +56,19 @@ import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.INSERT;
                 "com.pentabin.livingroom.annotations.Deletable",
                 "com.pentabin.livingroom.annotations.Updatable",
                 "com.pentabin.livingroom.annotations.Archivable",
-                "com.pentabin.livingroom.annotations.SelectableWhere",
                 "com.pentabin.livingroom.annotations.SelectableAll",
                 "com.pentabin.livingroom.annotations.SelectableById",
+                "com.pentabin.livingroom.annotations.SelectableWhere",
                 "com.pentabin.livingroom.annotations.SelectableWheres",
-
-
-        }) // TODO Add the others
+        })
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to LivingRoom Processor
+public class LivingRoomProcessor extends AbstractProcessor {
 
     private List<TypeName> entities;
     private HashMap<TypeElement, EntityClass> entitiesList;
-    static  String packageName; //TODO fro the database
-    static final String SUFFIX_DAO = "Dao";
-    static final String dbClassName = "CustomRoomDatabase";
+    static  String packageName; //TODO from the database class maybe?
+    static final String SUFFIX_DAO = "Dao"; // To delete
+    static final String dbClassName = "LivingRoomDatabase";
 
 
     @Override
@@ -80,7 +78,7 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
         entitiesList = new HashMap<>();
     }
 
-    public LivingroomProcessor(){};
+    public LivingRoomProcessor(){};
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
@@ -103,6 +101,7 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
         parseUpdatable(env);
         parseArchivable(env);
         parseSelectable(env);
+        parseSelectables(env);
         parseSelectableAll(env);
         parseSelectableById(env);
 
@@ -179,6 +178,26 @@ public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to Li
     }
 
     private void parseSelectable(RoundEnvironment env) {
+        Collection<? extends Element> elements =
+                env.getElementsAnnotatedWith(SelectableWhere.class);
+
+        for (Element e: elements ) {
+            SelectableWhere a = e.getAnnotation(SelectableWhere.class);
+            if (entitiesList.containsKey((TypeElement) e)) {
+                entitiesList.get(e).addSelectMethod(a.methodName(),
+                        a.where(),
+                        a.params());
+            } else {
+                EntityClass entityClass = new EntityClass((TypeElement) e);
+                entityClass.addSelectMethod(a.methodName(),
+                        a.where(),
+                        a.params());
+                entitiesList.put((TypeElement) e, entityClass);
+            }
+        }
+    }
+
+    private void parseSelectables(RoundEnvironment env) {
         Collection<? extends Element> elements =
                 env.getElementsAnnotatedWith(SelectableWheres.class);
 
