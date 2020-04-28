@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 ```
 # Annotations
 | Annotation | Role |
-| --- | --- | --- |
+| --- | --- |
 | `@Crdudable` | generates insert method in the components |
 | `@Insertable` | generates insert method in the components |
 | `@Deletable`      | generates delete method in the components |
