@@ -1,4 +1,4 @@
 package com.pentabin.livingroom.annotations;
 
-public @interface RetrievableById {
+public @interface SelectableAll {
 }

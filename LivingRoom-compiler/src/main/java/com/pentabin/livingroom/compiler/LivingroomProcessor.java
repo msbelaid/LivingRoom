@@ -3,7 +3,14 @@ package com.pentabin.livingroom.compiler;
 import androidx.room.Database;
 import androidx.room.TypeConverters;
 import com.pentabin.livingroom.annotations.Crudable;
+import com.pentabin.livingroom.annotations.Deletable;
 import com.pentabin.livingroom.annotations.Insertable;
+import com.pentabin.livingroom.annotations.SelectableAll;
+import com.pentabin.livingroom.annotations.SelectableById;
+import com.pentabin.livingroom.annotations.SelectableWhere;
+import com.pentabin.livingroom.annotations.SelectableWheres;
+import com.pentabin.livingroom.annotations.Updatable;
+import com.pentabin.livingroom.compiler.methods.CrudMethod;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -14,10 +21,12 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -31,48 +40,75 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
+
+import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_ALL;
+import static com.pentabin.livingroom.compiler.methods.CrudMethod.GET_BY_ID;
+import static com.pentabin.livingroom.compiler.methods.CrudMethod.INSERT;
 
 /**
  *
  */
 @SupportedAnnotationTypes(
-        "com.pentabin.livingroom.annotations.Crudable") // TODO Add the others
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class CrudableProcessor extends AbstractProcessor {// TODO Rename to LivingRoom Processor
+        {
+                "com.pentabin.livingroom.annotations.Crudable",
+                "com.pentabin.livingroom.annotations.Insertable",
+                "com.pentabin.livingroom.annotations.Deletable",
+                "com.pentabin.livingroom.annotations.Updatable",
+                "com.pentabin.livingroom.annotations.Archivable",
+                "com.pentabin.livingroom.annotations.SelectableWhere",
+                "com.pentabin.livingroom.annotations.SelectableWheres",
 
-    private List<TypeSpec> daoClasses;
+
+        }) // TODO Add the others
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
+public class LivingroomProcessor extends AbstractProcessor {// TODO Rename to LivingRoom Processor
+
     private List<TypeName> entities;
     private HashMap<TypeElement, EntityClass> entitiesList;
     static  String packageName; //TODO
     static final String SUFFIX_DAO = "Dao";
-    static final String SUFFIX_REPO = "Repository";
-    static final String SUFFIX_VM = "ViewModel";
     static final String dbClassName = "CustomRoomDatabase";
 
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         super.init(processingEnvironment);
-        daoClasses = new ArrayList<>();
         entities = new ArrayList<>();
         entitiesList = new HashMap<>();
     }
 
-    public CrudableProcessor(){};
+    public LivingroomProcessor(){};
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
         Collection<? extends Element> crudableElements =
                 env.getElementsAnnotatedWith(Crudable.class);
         for (Element annotatedElement: crudableElements) {
-            //TODO the class must be annotated with @Entity
+            //TODO the class must be annotated with @Entity and Extends Basic Activity
             if (annotatedElement.getKind() != ElementKind.CLASS) {
                 System.err.println("Crudable can only be applied to a class");
             }
+            TypeElement superClassTypeElement =
+                    (TypeElement)((DeclaredType)((TypeElement)annotatedElement).getSuperclass()).asElement();
+            if (!superClassTypeElement.getSimpleName().toString().equals("BasicEntity"))
+                System.err.println("The annotated class must inherit from BasicEntity");
+        }
+
+        parseCrudable(crudableElements);
+        parseInsertable(env);
+        parseDeletable(env);
+        parseUpdatable(env);
+        parseArchivable(env);
+        parseSelectable(env);
+        parseSelectableAll(env);
+
+        for (Map.Entry<TypeElement, EntityClass> e: entitiesList.entrySet()) {
             try {
-                generateCodeForEntity((TypeElement) annotatedElement);
-            } catch (IOException e) {
-                e.printStackTrace();
+                generateCodeForEntity(e.getValue());
+                entities.add(e.getValue().getTypeName());
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
         try {
@@ -80,76 +116,116 @@ public class CrudableProcessor extends AbstractProcessor {// TODO Rename to Livi
         } catch (IOException e) {
             e.printStackTrace();
         }
-        parseCrudable(crudableElements);
-        Collection<? extends Element> insertableElements =
-                env.getElementsAnnotatedWith(Insertable.class);
-        parseInsertable(insertableElements);
+
         return false;
     }
 
-    private void parseCrudable(Collection<? extends Element> crudableElements) {
+    private void  parseAnnotation(Collection<? extends Element> crudableElements, String method) {
         for (Element e: crudableElements ) {
             if (entitiesList.containsKey((TypeElement) e))
-                entitiesList.get(e).addCrudMethods();
+                entitiesList.get(e).addMethod(method);
             else {
                 EntityClass entityClass = new EntityClass((TypeElement)e);
-                entityClass.addCrudMethods();
+                entityClass.addMethod(method);
                 entitiesList.put((TypeElement) e, entityClass);
             }
         }
     }
 
-    private void parseInsertable(Collection<? extends Element> insertableElements) {
-        for (Element e: insertableElements ) {
-            if (entitiesList.containsKey((TypeElement) e)) {
-                entitiesList.get(e).addInsertMethod();
-            }
-            else {
-                EntityClass entityClass = new EntityClass((TypeElement)e);
-                entityClass.addInsertMethod();
-                entitiesList.put((TypeElement) e, entityClass);
+    private void parseCrudable(Collection<? extends Element> crudableElements) { // TODO change like others do
+        //parseAnnotation(crudableElements, new Cr);
+        // TODO Crudable.class
+    }
+
+    private void parseInsertable(RoundEnvironment env) {
+        Collection<? extends Element> insertableElements =
+                env.getElementsAnnotatedWith(Insertable.class);
+        parseAnnotation(insertableElements, INSERT);
+    }
+
+    private void parseDeletable(RoundEnvironment env) {
+        Collection<? extends Element> deletableElements =
+                env.getElementsAnnotatedWith(Deletable.class);
+        parseAnnotation(deletableElements, CrudMethod.DELETE);
+    }
+
+    private void parseUpdatable(RoundEnvironment env) {
+        Collection<? extends Element> updatableElements =
+                env.getElementsAnnotatedWith(Updatable.class);
+        parseAnnotation(updatableElements, CrudMethod.UPDATE);
+    }
+
+
+    private void parseArchivable(RoundEnvironment env) {
+        Collection<? extends Element> archivableElements =
+                env.getElementsAnnotatedWith(Updatable.class);
+        parseAnnotation(archivableElements, CrudMethod.SOFT_DELETE);
+    }
+
+    private void parseSelectableAll(RoundEnvironment env) {
+        Collection<? extends Element> archivableElements =
+                env.getElementsAnnotatedWith(SelectableAll.class);
+        parseAnnotation(archivableElements, GET_ALL);
+    }
+
+    // TODO parseSelectableById
+    private void parseSelectableById(RoundEnvironment env) {
+        Collection<? extends Element> archivableElements =
+                env.getElementsAnnotatedWith(SelectableById.class);
+        parseAnnotation(archivableElements, GET_BY_ID);
+    }
+
+    private void parseSelectable(RoundEnvironment env) {
+        Collection<? extends Element> elements =
+                env.getElementsAnnotatedWith(SelectableWheres.class);
+
+        for (Element e: elements ) {
+            for (SelectableWhere a: e.getAnnotation(SelectableWheres.class).value() ) {
+
+                if (entitiesList.containsKey((TypeElement) e)) {
+                    entitiesList.get(e).addSelectMethod(a.methodName(),
+                            a.where(),
+                            a.params());
+                } else {
+                    EntityClass entityClass = new EntityClass((TypeElement) e);
+                    entitiesList.get(e).addSelectMethod(a.methodName(),
+                            a.where(),
+                            a.params());
+                    entitiesList.put((TypeElement) e, entityClass);
+                }
             }
         }
     }
 
-    private void generateCodeForEntity(TypeElement clazz) throws IOException {
-        String path = clazz.getQualifiedName().toString();
-        if (packageName == null) {
+    private void generateCodeForEntity(EntityClass clazz) throws IOException {
+        String path = clazz.getTypeElement().getQualifiedName().toString();
+        if (packageName == null) { // TODO get out package from here
             int lastDot = path.lastIndexOf('.');
             if (lastDot > 0) {
                 packageName = path.substring(0, lastDot);
             }
-            //className = path.substring(lastDot + 1);
         }
-        entities.add(TypeName.get(clazz.asType()));
         generateDaoClass(clazz);
         generateRepositoryClass(clazz);
         generateViewModelClass(clazz);
     }
 
 
-    private void generateDaoClass(TypeElement clazz) throws IOException {
-        DaoClassGenerator dao = new DaoClassGenerator(clazz);
-        JavaFile javaFile = JavaFile.builder(packageName, dao.generate())
-                .build();
-
+    private void generateDaoClass(EntityClass clazz) throws IOException {
+        JavaFile javaFile = JavaFile.builder(packageName, clazz.generateDaoClass()).build();
         Filer filer = processingEnv.getFiler();
         //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
     }
 
-    private void generateViewModelClass(TypeElement clazz) throws IOException {
-        ViewModelClassGenerator viewModel = new ViewModelClassGenerator(clazz);
-        JavaFile javaFile = JavaFile.builder(packageName, viewModel.generate())
-                .build();
-
+    private void generateViewModelClass(EntityClass clazz) throws IOException {
+        JavaFile javaFile = JavaFile.builder(packageName, clazz.generateViewModelClass()).build();
         Filer filer = processingEnv.getFiler();
         //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);
     }
 
-
-    static ParameterizedTypeName getLiveDataType(TypeName clazz){
+    public static ParameterizedTypeName getLiveDataType(TypeName clazz){ // TODO put it on utils
         ClassName liveDataClass = ClassName.get("androidx.lifecycle", "LiveData");
         ClassName listClass = ClassName.get("java.util", "List");
         ParameterizedTypeName returnType = ParameterizedTypeName.get(liveDataClass,
@@ -157,11 +233,8 @@ public class CrudableProcessor extends AbstractProcessor {// TODO Rename to Livi
         return returnType;
     }
 
-    private void generateRepositoryClass(TypeElement clazz) throws IOException {
-        RepositoryClassGenerator repo = new RepositoryClassGenerator(clazz);
-        JavaFile javaFile = JavaFile.builder(packageName, repo.generate())
-                .build();
-
+    private void generateRepositoryClass(EntityClass clazz) throws IOException {
+        JavaFile javaFile = JavaFile.builder(packageName, clazz.generateRepositoryClass()).build();
         Filer filer = processingEnv.getFiler();
         //javaFile.writeTo(System.out);
         javaFile.writeTo(filer);

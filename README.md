@@ -79,6 +79,16 @@ public class MainActivity extends AppCompatActivity {
     // ...
 }
 ```
+# Annotations
+| `@Crdudable`java | generates insert method in the components |
+| `@Insertable`java | generates insert method in the components |
+| `@Deletable`      | generates delete method in the components |
+| `@Updatable`      | generates delete method in the components |
+| `@Archivable`      | generates delete method in the components |
+| `@SelectableAll`      | generates delete method in the components |
+| `@SelectableById`      | generates delete method in the components |
+| `@SelectableWhere`      | generates delete method in the components |
+| `@SelectableAll`      | generates delete method in the components |
 
 # Todo
 * Add database class
@@ -86,3 +96,4 @@ public class MainActivity extends AppCompatActivity {
 * Add exceptions
 * Display compile errors 
 * Tests automation
+* Generate only Dao or Dao+Repo or all of them (by default)
