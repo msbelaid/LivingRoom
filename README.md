@@ -80,8 +80,10 @@ public class MainActivity extends AppCompatActivity {
 }
 ```
 # Annotations
-| `@Crdudable`java | generates insert method in the components |
-| `@Insertable`java | generates insert method in the components |
+| Annotation | Role | Name in generated classes |
+| ---
+| `@Crdudable` | generates insert method in the components |
+| `@Insertable` | generates insert method in the components |
 | `@Deletable`      | generates delete method in the components |
 | `@Updatable`      | generates delete method in the components |
 | `@Archivable`      | generates delete method in the components |
@@ -96,4 +98,3 @@ public class MainActivity extends AppCompatActivity {
 * Add exceptions
 * Display compile errors 
 * Tests automation
-* Generate only Dao or Dao+Repo or all of them (by default)
