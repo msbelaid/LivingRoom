@@ -33,8 +33,8 @@ And these two lines to your `build.gradle` (app)
 ```
 dependencies {
     ...
-    implementation 'com.github.msbelaid:LivingRoom:0.3'
-    annotationProcessor 'com.github.msbelaid.LivingRoom:LivingRoom-compiler:0.3'
+    implementation 'com.github.msbelaid:LivingRoom:0.5'
+    annotationProcessor 'com.github.msbelaid.LivingRoom:LivingRoom-compiler:0.5'
     ...
 }
 ```
