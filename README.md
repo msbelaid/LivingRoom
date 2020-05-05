@@ -143,10 +143,12 @@ This annotation takes three parameters
 * `where`: the `WHERE` clause in the select query, can also add other requirements as `ORDER BY` ans `LIMIT`
 * `params`: the parameters of the generated method
 
-### Examples
+Here is an example using this annotation
 ```java
 @SelectableWhere(methodName = "getArchived", where = "isDeleted = 1")
-@SelectableWhere(methodName = "getDateRange", where = "created_at > :from AND created_at < :to", params = {"java.util.Date from", "java.util.Date to"})
+@SelectableWhere(methodName = "getDateRange",
+        where = "created_at > :from AND created_at < :to", 
+        params = {"java.util.Date from", "java.util.Date to"})
 @Entity
 public class Note extends BasicEntity {
     private String title;
@@ -154,9 +156,14 @@ public class Note extends BasicEntity {
     //...
 }
 ```
-
+This generates `getArchived()` method that returns all the archived items.
+It generates also `getDateRange(from, to)` to select all notes in a date range.
+ 
 # TODOs
 * Add database class
 * Migrations in the database class
 * Tests automation
 * generate LiveData or not? let the user choose
+
+# Issues
+Feel free to open [issues](https://github.com/msbelaid/LivingRoom/issues/new) 

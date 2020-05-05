@@ -7,7 +7,9 @@ import com.pentabin.livingroom.annotations.SelectableWhere;
 
 @Crudable
 @SelectableWhere(methodName = "getArchived", where = "isDeleted = 1")
-@SelectableWhere(methodName = "getDateRange", where = "created_at > :from AND created_at < :to", params = {"java.util.Date from", "java.util.Date to"})
+@SelectableWhere(methodName = "getDateRange",
+        where = "created_at > :from AND created_at < :to",
+        params = {"java.util.Date from", "java.util.Date to"})
 @Entity
 public class Note extends BasicEntity {
     private String title;
