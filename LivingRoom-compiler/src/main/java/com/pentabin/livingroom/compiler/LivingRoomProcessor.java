@@ -1,6 +1,7 @@
 package com.pentabin.livingroom.compiler;
 
 import androidx.room.Database;
+import androidx.room.Entity;
 import androidx.room.TypeConverters;
 import com.pentabin.livingroom.annotations.Crudable;
 import com.pentabin.livingroom.annotations.Deletable;
@@ -10,13 +11,11 @@ import com.pentabin.livingroom.annotations.SelectableById;
 import com.pentabin.livingroom.annotations.SelectableWhere;
 import com.pentabin.livingroom.annotations.SelectableWheres;
 import com.pentabin.livingroom.annotations.Updatable;
-import com.pentabin.livingroom.compiler.methods.LivingroomMethod;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
@@ -40,11 +39,12 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.tools.Diagnostic;
 
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.CRUD;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_ALL;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_BY_ID;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.INSERT;
+import static com.pentabin.livingroom.compiler.LivingroomMethod.GET_ALL;
+import static com.pentabin.livingroom.compiler.LivingroomMethod.GET_BY_ID;
+import static com.pentabin.livingroom.compiler.LivingroomMethod.INSERT;
+import static com.pentabin.livingroom.compiler.LivingroomMethod.selectWhereMethod;
 
 /**
  *
@@ -89,10 +89,8 @@ public class LivingRoomProcessor extends AbstractProcessor {
             if (annotatedElement.getKind() != ElementKind.CLASS) {
                 System.err.println("Crudable can only be applied to a class");
             }
-            TypeElement superClassTypeElement =
-                    (TypeElement)((DeclaredType)((TypeElement)annotatedElement).getSuperclass()).asElement();
-            if (!superClassTypeElement.getSimpleName().toString().equals("BasicEntity"))
-                System.err.println("The annotated class must inherit from BasicEntity");
+            checkIfExtendsBasicEntity(annotatedElement);
+            checkIfAnnotatedWithEntity(annotatedElement);
         }
 
         parseCrudable(env);
@@ -122,22 +120,35 @@ public class LivingRoomProcessor extends AbstractProcessor {
         return false;
     }
 
-    private void  parseAnnotation(Collection<? extends Element> crudableElements, String method) {
-        for (Element e: crudableElements ) {
-            if (entitiesList.containsKey((TypeElement) e))
-                entitiesList.get(e).addMethod(method);
+    private void  parseAnnotation(Collection<? extends Element> elements, String method) {
+        for (Element e: elements ) {
+            if (entitiesList.containsKey((TypeElement) e)) {
+                EntityClass entityClass = entitiesList.get(e);
+                entitiesList.get(e).addMethod(LivingroomMethod.of(entityClass, method));
+            }
             else {
                 EntityClass entityClass = new EntityClass((TypeElement)e);
-                entityClass.addMethod(method);
+                entityClass.addMethod(LivingroomMethod.of(entityClass, method));
                 entitiesList.put((TypeElement) e, entityClass);
             }
         }
     }
 
-    private void parseCrudable(RoundEnvironment env) { // TODO change like others do
+    private void parseCrudable(RoundEnvironment env) {
         Collection<? extends Element> elements =
                 env.getElementsAnnotatedWith(Crudable.class);
-        parseAnnotation(elements, CRUD);    }
+        for (Element e: elements ) {
+            if (entitiesList.containsKey((TypeElement) e)) {
+                EntityClass entityClass = entitiesList.get(e);
+                entitiesList.get(e).addMethods(LivingroomMethod.crud(entityClass));
+            }
+            else {
+                EntityClass entityClass = new EntityClass((TypeElement)e);
+                entityClass.addMethods(LivingroomMethod.crud(entityClass));
+                entitiesList.put((TypeElement) e, entityClass);
+            }
+        }
+    }
 
     private void parseInsertable(RoundEnvironment env) {
         Collection<? extends Element> insertableElements =
@@ -170,34 +181,37 @@ public class LivingRoomProcessor extends AbstractProcessor {
         parseAnnotation(archivableElements, GET_ALL);
     }
 
-    // TODO parseSelectableById
     private void parseSelectableById(RoundEnvironment env) {
         Collection<? extends Element> archivableElements =
                 env.getElementsAnnotatedWith(SelectableById.class);
         parseAnnotation(archivableElements, GET_BY_ID);
     }
 
-    private void parseSelectable(RoundEnvironment env) {
+    private void parseSelectable(RoundEnvironment env) { // TODO refactor
         Collection<? extends Element> elements =
                 env.getElementsAnnotatedWith(SelectableWhere.class);
 
         for (Element e: elements ) {
             SelectableWhere a = e.getAnnotation(SelectableWhere.class);
             if (entitiesList.containsKey((TypeElement) e)) {
-                entitiesList.get(e).addSelectMethod(a.methodName(),
-                        a.where(),
-                        a.params());
+                entitiesList.get(e).addMethod(
+                        selectWhereMethod(entitiesList.get(e),
+                                a.methodName(),
+                                a.where(),
+                                a.params(), true));
             } else {
                 EntityClass entityClass = new EntityClass((TypeElement) e);
-                entityClass.addSelectMethod(a.methodName(),
-                        a.where(),
-                        a.params());
+                entityClass.addMethod(
+                        selectWhereMethod(entitiesList.get(e),
+                                a.methodName(),
+                                a.where(),
+                                a.params(), true));
                 entitiesList.put((TypeElement) e, entityClass);
             }
         }
     }
 
-    private void parseSelectables(RoundEnvironment env) {
+    private void parseSelectables(RoundEnvironment env) { // TODO refactor
         Collection<? extends Element> elements =
                 env.getElementsAnnotatedWith(SelectableWheres.class);
 
@@ -205,14 +219,18 @@ public class LivingRoomProcessor extends AbstractProcessor {
             for (SelectableWhere a: e.getAnnotation(SelectableWheres.class).value() ) {
 
                 if (entitiesList.containsKey((TypeElement) e)) {
-                    entitiesList.get(e).addSelectMethod(a.methodName(),
-                            a.where(),
-                            a.params());
+                    entitiesList.get(e).addMethod(
+                            selectWhereMethod(entitiesList.get(e),
+                                    a.methodName(),
+                                    a.where(),
+                                    a.params(), true));
                 } else {
                     EntityClass entityClass = new EntityClass((TypeElement) e);
-                    entityClass.addSelectMethod(a.methodName(),
-                            a.where(),
-                            a.params());
+                    entityClass.addMethod(
+                            selectWhereMethod(entitiesList.get(e),
+                                    a.methodName(),
+                                    a.where(),
+                                    a.params(), true));
                     entitiesList.put((TypeElement) e, entityClass);
                 }
             }
@@ -221,7 +239,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
     private void generateCodeForEntity(EntityClass clazz) throws IOException {
         String path = clazz.getTypeElement().getQualifiedName().toString();
-        if (packageName == null) { // TODO get out package from here
+        if (packageName == null) { // TODO get out package from here (only for the database)
             int lastDot = path.lastIndexOf('.');
             if (lastDot > 0) {
                 packageName = path.substring(0, lastDot);
@@ -232,6 +250,18 @@ public class LivingRoomProcessor extends AbstractProcessor {
         generateViewModelClass(clazz);
     }
 
+    private void checkIfExtendsBasicEntity(Element annotatedElement){
+        TypeElement superClassTypeElement =
+                (TypeElement)((DeclaredType)((TypeElement)annotatedElement).getSuperclass()).asElement();
+        if (!superClassTypeElement.getSimpleName().toString().equals("BasicEntity"))
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Your entity class must inherit from BasicEntity in order to use LivingRoom annotations", annotatedElement);
+
+    }
+    private void checkIfAnnotatedWithEntity(Element annotatedElement){
+        if (annotatedElement.getAnnotation(Entity.class) == null)
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Please consider marking your class as a room @Entity", annotatedElement);
+
+    }
 
     private void generateDaoClass(EntityClass clazz) throws IOException {
         JavaFile javaFile = JavaFile.builder(packageName, clazz.generateDaoClass()).build();

@@ -1,6 +1,5 @@
-package com.pentabin.livingroom.compiler.methods;
+package com.pentabin.livingroom.compiler;
 
-import com.pentabin.livingroom.compiler.EntityClass;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -12,7 +11,7 @@ import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
 // TODO this sub class has only one parameter (item of type Entity)
-public abstract class AsyncMethod extends LivingroomMethod {
+public class AsyncMethod extends LivingroomMethod {
 
     private static final String asyncTaskSuffix = "AsyncTask";
     public static final String ITEM_PARAM = "item"; // TODO replace everywhere

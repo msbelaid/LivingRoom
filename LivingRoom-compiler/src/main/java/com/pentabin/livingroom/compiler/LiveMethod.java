@@ -1,8 +1,7 @@
-package com.pentabin.livingroom.compiler.methods;
+package com.pentabin.livingroom.compiler;
 
 import androidx.room.Query;
 
-import com.pentabin.livingroom.compiler.EntityClass;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -22,7 +21,7 @@ public class LiveMethod extends LivingroomMethod {
         this(methodName, where, entityClass, params, true);
     }
 
-    public LiveMethod(String methodName, String where, EntityClass entityClass, String[] params, boolean isList) {
+    LiveMethod(String methodName, String where, EntityClass entityClass, String[] params, boolean isList) {
         super(entityClass, methodName);
         this.isList = isList;
         this.where = where;

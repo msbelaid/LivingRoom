@@ -2,32 +2,19 @@ package com.pentabin.livingroom.compiler;
 
 import androidx.room.Dao;
 
-import com.pentabin.livingroom.compiler.methods.ArchiveMethod;
-import com.pentabin.livingroom.compiler.methods.AsyncMethod;
-import com.pentabin.livingroom.compiler.methods.LivingroomMethod;
-import com.pentabin.livingroom.compiler.methods.DeleteMethod;
-import com.pentabin.livingroom.compiler.methods.InsertMethod;
-import com.pentabin.livingroom.compiler.methods.LiveMethod;
-import com.pentabin.livingroom.compiler.methods.UpdateMethod;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 import static com.pentabin.livingroom.compiler.LivingRoomProcessor.dbClassName;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.CRUD;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.DELETE;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_ALL;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.GET_BY_ID;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.INSERT;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.SOFT_DELETE;
-import static com.pentabin.livingroom.compiler.methods.LivingroomMethod.UPDATE;
 
 public class EntityClass {
     private static final String SUFFIX_DAO = "Dao";
@@ -57,106 +44,44 @@ public class EntityClass {
         methodsSet = new HashSet<>();
     }
 
-    public String getPackageName() {
+    private String getPackageName() {
         return packageName;
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
-    public TypeName getTypeName() {
+    TypeName getTypeName() {
         return typeName;
     }
 
-    public TypeElement getTypeElement() {
+    TypeElement getTypeElement() {
         return typeElement;
     }
 
-    public String getDaoClassName() {
+    String getDaoClassName() {
         return daoClassName;
     }
 
-    public String getRepositoryClassName() {
+    String getRepositoryClassName() {
         return repositoryClassName;
     }
 
-    public String getViewModelClassName() {
+    private String getViewModelClassName() {
         return viewModelClassName;
     }
 
-    public Set<? extends LivingroomMethod> getMethodsSet() {
-        return methodsSet;
+    private Set<? extends LivingroomMethod> getMethodsSet() {
+        return methodsSet; // TODO use immutableSet
     }
 
-    public void addMethod(LivingroomMethod method) {
+    void addMethod(LivingroomMethod method) {
         methodsSet.add(method);
     }
 
-    private void addInsertMethod() {
-        methodsSet.add(new InsertMethod(this));
-    }
-
-    private void addDeleteMethod() {
-        methodsSet.add(new DeleteMethod(this));
-    }
-
-    private void addUpdateMethod() {
-        methodsSet.add(new UpdateMethod(this));
-    }
-
-    private void addArchiveMethod() {
-        methodsSet.add(new ArchiveMethod(this) );
-    }
-
-    private void addGetAllMethod() {
-        methodsSet.add(new LiveMethod(GET_ALL, "isDeleted = 0", this, null) );
-    }
-
-    private void addGetByIdMethod() {
-        String[] params = {"Long id"};
-        methodsSet.add(new LiveMethod(GET_BY_ID, "id = :id", this, params, false) );
-    }
-
-    private void addCrudMethods() {
-        addInsertMethod(); // TODO display a warning if already exists
-        addUpdateMethod();
-        addDeleteMethod();
-        addArchiveMethod();
-        addGetAllMethod();
-        addGetByIdMethod();
-    }
-
-    public void addMethod(String type) {
-        // TODO test if method already declared
-        switch (type) {
-            case INSERT:
-                addInsertMethod();
-                break;
-            case DELETE:
-                addDeleteMethod();
-                break;
-            case SOFT_DELETE:
-                addArchiveMethod();
-                break;
-            case UPDATE:
-                addUpdateMethod();
-                break;
-            case CRUD:
-                addCrudMethods();
-                break;
-            case GET_ALL:
-                addGetAllMethod();
-                break;
-            case GET_BY_ID:
-                addGetByIdMethod();
-                break;
-            default:
-        }
-    }
-
-    public void addSelectMethod(String methodName, String where, String[] params) {
-        methodsSet.add(new LiveMethod(methodName, where, this, params));
+    void addMethods(List<LivingroomMethod> method) {
+        methodsSet.addAll(method);
     }
 
     @Override
@@ -170,7 +95,7 @@ public class EntityClass {
         return super.equals(o);
     }
 
-    public TypeSpec generateDaoClass(){
+    TypeSpec generateDaoClass(){
         TypeSpec.Builder daoClass = TypeSpec.interfaceBuilder(this.getDaoClassName())
                 .addModifiers(Modifier.PUBLIC)
                 .addAnnotation(Dao.class);
@@ -181,7 +106,7 @@ public class EntityClass {
         return daoClass.build();
     }
 
-    public TypeSpec generateRepositoryClass() {
+    TypeSpec generateRepositoryClass() {
         final String dbField = dbClassName.toLowerCase();
 
         MethodSpec constructor = MethodSpec.constructorBuilder()
@@ -209,7 +134,7 @@ public class EntityClass {
         return repositoryClass.build();
     }
 
-    public TypeSpec generateViewModelClass() {
+    TypeSpec generateViewModelClass() {
         MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
                 .addParameter(ClassName.get("android.app", "Application"), "app")
