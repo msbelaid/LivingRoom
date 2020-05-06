@@ -1,7 +1,9 @@
 # LivingRoom
 LivingRoom is another layer above the Android [Room](https://developer.android.com/topic/libraries/architecture/room)
 persistence library. LivingRoom generates all the boilerplate [DAOs](https://developer.android.com/training/data-storage/room/accessing-data), Repositories and [ViewModels](https://developer.android.com/topic/libraries/architecture/viewmodel)
-Just mark your entities with the appropriate [LivingRoom](https://github.com/msbelaid/LivingRoom) annotations.
+
+Just mark your entities with the appropriate [LivingRoom](https://github.com/msbelaid/LivingRoom) annotations
+(`@Insertable`, `@Deletable`, `@Updatable`, `@SelectableAll` ...).
 
 [![](https://jitpack.io/v/msbelaid/LivingRoom.svg)](https://jitpack.io/#msbelaid/LivingRoom)
 
@@ -138,12 +140,12 @@ This returns also a [LiveData](https://developer.android.com/topic/libraries/arc
 
 ## `@SelectableWhere` 
 Use this annotation to generate your own `SELECT` query.
-This annotation takes three parameters
-* `methodName`: the name of generated method in the components.
-* `where`: the `WHERE` clause in the select query, can also add other requirements as `ORDER BY` ans `LIMIT`
-* `params`: the parameters of the generated method
+This annotation takes three parameters:
+* `methodName`: the name of the generated method in the components.
+* `where`: the `WHERE` clause in the select query, can also add other requirements as `ORDER BY` and `LIMIT`.
+* `params`: the parameters of the generated method.
 
-Here is an example using this annotation
+Here is an example using this annotation.
 ```java
 @SelectableWhere(methodName = "getArchived", where = "isDeleted = 1")
 @SelectableWhere(methodName = "getDateRange",
@@ -160,10 +162,11 @@ This generates `getArchived()` method that returns all the archived items.
 It generates also `getDateRange(from, to)` to select all notes in a date range.
  
 # TODOs
-* Add database class
+* Add the database class
 * Migrations in the database class
 * Tests automation
-* returns LiveData or not? let the user choose
+* return LiveData or not? let the user choose
+* Generic queries
 
 # Issues
 Feel free to open [issues](https://github.com/msbelaid/LivingRoom/issues/new) 
