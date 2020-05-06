@@ -1,7 +1,7 @@
 # LivingRoom
 LivingRoom is another layer above the Android [Room](https://developer.android.com/topic/libraries/architecture/room)
-persistence library to generate all the boilerplate DAOs, Repositories and [ViewModels](https://developer.android.com/topic/libraries/architecture/viewmodel)
-By marking your Entity classes with the appropriate [LivingRoom](https://github.com/msbelaid/LivingRoom) annotations.
+persistence library. LivingRoom generates all the boilerplate [DAOs](https://developer.android.com/training/data-storage/room/accessing-data), Repositories and [ViewModels](https://developer.android.com/topic/libraries/architecture/viewmodel)
+Just mark your entities with the appropriate [LivingRoom](https://github.com/msbelaid/LivingRoom) annotations.
 
 [![](https://jitpack.io/v/msbelaid/LivingRoom.svg)](https://jitpack.io/#msbelaid/LivingRoom)
 
@@ -12,11 +12,11 @@ Using these annotations will generate boilerplate code for you.
 * No need to create the annoying asyncTasks for each database operation
 * No need to create ViewModels
 * No need to create a RoomDatabase and listing your entities.
+
 [LivingRoom](https://github.com/msbelaid/LivingRoom) will do it for you!
 
 ### Cons
 * Do not support migrations yet
-* Can extend the generated ViewModel and Repositories but not the Dao yet.
 
 # How to install
 Add the following lines to your `build.gradle` (root)
