@@ -104,8 +104,8 @@ guidelines.
 * delete(item) to permanently delete an item from the database.
 * update(item) to update an item in the database, and update the updated_at timestamps
 * archive(item) to archive the item without deleting it, will set idDeleted to true
-* getAll() to retrieve all the not archived items from the database, returns a LiveData list.
-* getById(long) get an item using its id, returns a LiveData object.
+* getAll() to retrieve all the not archived items from the database, returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) list.
+* getById(long) get an item using its id, returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) object.
 
 ## `@Insertable`
 Use this annotation to generate an insert method for your entities.
@@ -129,12 +129,12 @@ This only change the flag `isDeleted` to true.
 ## `@SelectableAll` 
 Use this annotation to generate `getAll()` method for your entities.
 The method `getAll()` retrieves all the items of an entity that are not archived.
-This returns a LiveData list.
+This returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) list.
 
 ## `@SelectableById`
 Use this annotation to generate `getById()` method for your entities.
 The method `getById()` takes a long parameter representing the id and returns an item.
-This returns also returned a LiveData object.
+This returns also a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) object.
 
 ## `@SelectableWhere` 
 Use this annotation to generate your own `SELECT` query.
@@ -163,7 +163,7 @@ It generates also `getDateRange(from, to)` to select all notes in a date range.
 * Add database class
 * Migrations in the database class
 * Tests automation
-* generate LiveData or not? let the user choose
+* returns LiveData or not? let the user choose
 
 # Issues
 Feel free to open [issues](https://github.com/msbelaid/LivingRoom/issues/new) 
