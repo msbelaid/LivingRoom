@@ -11,7 +11,7 @@ Using these annotations will generate boilerplate code for you.
 * No need to create repositories for each Entity class. 
 * No need to create the annoying asyncTasks for each database operation
 * No need to create ViewModels
-* No need to create a RoomDatabase and listing your entities.
+* No need to create a RoomDatabase and declare all your entities.
 
 [LivingRoom](https://github.com/msbelaid/LivingRoom) will do it for you!
 
@@ -104,7 +104,7 @@ guidelines.
 * delete(item) to permanently delete an item from the database.
 * update(item) to update an item in the database, and update the updated_at timestamps
 * archive(item) to archive the item without deleting it, will set idDeleted to true
-* getAll() to retrieve all the not archived items from the database, returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) list.
+* getAll() to retrieve all the non-archived items from the database, returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) list.
 * getById(long) get an item using its id, returns a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) object.
 
 ## `@Insertable`
@@ -113,16 +113,16 @@ The method `insert` takes an object of the entity type and returns a long number
 It also saves the current timestamp in `created_at`.
 
 ## `@Deletable` 
-Use this annotation to generate delete method for your entities.
+Use this annotation to generate a delete method for your entities.
 The method `delete` takes an object of the entity type and permanently delete the item from the database.
 
 ## `@Updatable`
-Use this annotation to generate update method for your entities.
+Use this annotation to generate an update method for your entities.
 The method `update` takes an object of the entity type and update it in the database.
 It also set the `updated_at` field to the current timestamp.
 
 ## `@Archivable` 
-Use this annotation to generate archive method for your entities.
+Use this annotation to generate an archive method for your entities.
 The method `archive` takes an object of the entity type and soft deleted it from the database.
 This only change the flag `isDeleted` to true.
 
@@ -133,7 +133,7 @@ This returns a [LiveData](https://developer.android.com/topic/libraries/architec
 
 ## `@SelectableById`
 Use this annotation to generate `getById()` method for your entities.
-The method `getById()` takes a long parameter representing the id and returns an item.
+The method `getById()` takes a long parameter representing the id, and returns an item.
 This returns also a [LiveData](https://developer.android.com/topic/libraries/architecture/livedata) object.
 
 ## `@SelectableWhere` 
