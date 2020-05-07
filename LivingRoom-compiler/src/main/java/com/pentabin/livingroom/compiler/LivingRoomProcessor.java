@@ -3,6 +3,8 @@ package com.pentabin.livingroom.compiler;
 import androidx.room.Database;
 import androidx.room.Entity;
 import androidx.room.TypeConverters;
+
+import com.pentabin.livingroom.annotations.Archivable;
 import com.pentabin.livingroom.annotations.Crudable;
 import com.pentabin.livingroom.annotations.Deletable;
 import com.pentabin.livingroom.annotations.Insertable;
@@ -35,7 +37,6 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -66,8 +67,8 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
     private List<TypeName> entities;
     private HashMap<TypeElement, EntityClass> entitiesList;
-    static  String packageName; //TODO from the database class maybe?
-    static final String SUFFIX_DAO = "Dao"; // To delete
+    private static  String packageName; //TODO from the database class maybe?
+    private static final String SUFFIX_DAO = "Dao"; // Todo remove
     static final String dbClassName = "LivingRoomDatabase";
 
 
@@ -78,21 +79,10 @@ public class LivingRoomProcessor extends AbstractProcessor {
         entitiesList = new HashMap<>();
     }
 
-    public LivingRoomProcessor(){};
+    public LivingRoomProcessor(){}
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment env) {
-        Collection<? extends Element> crudableElements =
-                env.getElementsAnnotatedWith(Crudable.class);
-        for (Element annotatedElement: crudableElements) {
-            //TODO the class must be annotated with @Entity and Extends Basic Activity
-            if (annotatedElement.getKind() != ElementKind.CLASS) {
-                System.err.println("Crudable can only be applied to a class");
-            }
-            checkIfExtendsBasicEntity(annotatedElement);
-            checkIfAnnotatedWithEntity(annotatedElement);
-        }
-
         parseCrudable(env);
         parseInsertable(env);
         parseDeletable(env);
@@ -122,7 +112,9 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
     private void  parseAnnotation(Collection<? extends Element> elements, String method) {
         for (Element e: elements ) {
-            if (entitiesList.containsKey((TypeElement) e)) {
+            checkIfExtendsBasicEntity(e);
+            checkIfAnnotatedWithEntity(e);
+            if (entitiesList.containsKey(e)) {
                 EntityClass entityClass = entitiesList.get(e);
                 entitiesList.get(e).addMethod(LivingroomMethod.of(entityClass, method));
             }
@@ -138,7 +130,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
         Collection<? extends Element> elements =
                 env.getElementsAnnotatedWith(Crudable.class);
         for (Element e: elements ) {
-            if (entitiesList.containsKey((TypeElement) e)) {
+            if (entitiesList.containsKey(e)) {
                 EntityClass entityClass = entitiesList.get(e);
                 entitiesList.get(e).addMethods(LivingroomMethod.crud(entityClass));
             }
@@ -171,7 +163,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
     private void parseArchivable(RoundEnvironment env) {
         Collection<? extends Element> archivableElements =
-                env.getElementsAnnotatedWith(Updatable.class);
+                env.getElementsAnnotatedWith(Archivable.class);
         parseAnnotation(archivableElements, LivingroomMethod.SOFT_DELETE);
     }
 
@@ -193,7 +185,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
         for (Element e: elements ) {
             SelectableWhere a = e.getAnnotation(SelectableWhere.class);
-            if (entitiesList.containsKey((TypeElement) e)) {
+            if (entitiesList.containsKey(e)) {
                 entitiesList.get(e).addMethod(
                         selectWhereMethod(entitiesList.get(e),
                                 a.methodName(),
@@ -218,7 +210,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
         for (Element e: elements ) {
             for (SelectableWhere a: e.getAnnotation(SelectableWheres.class).value() ) {
 
-                if (entitiesList.containsKey((TypeElement) e)) {
+                if (entitiesList.containsKey(e)) {
                     entitiesList.get(e).addMethod(
                             selectWhereMethod(entitiesList.get(e),
                                     a.methodName(),
@@ -292,7 +284,7 @@ public class LivingRoomProcessor extends AbstractProcessor {
 
         for (TypeName entity: entities) {
             int lastDot = entity.toString().lastIndexOf('.');
-            String entityClassName = entity.toString().substring(lastDot + 1);;
+            String entityClassName = entity.toString().substring(lastDot + 1);
             listEntities.append(entityClassName).append(".class, ");
             listDaoMethods.add(
                     MethodSpec.methodBuilder(

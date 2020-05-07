@@ -10,11 +10,11 @@ import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
 
-// TODO this sub class has only one parameter (item of type Entity)
 public class AsyncMethod extends LivingroomMethod {
+    // this sub class has only one parameter (item of type Entity)
 
     private static final String asyncTaskSuffix = "AsyncTask";
-    public static final String ITEM_PARAM = "item"; // TODO replace everywhere
+    private static final String ITEM_PARAM = "item";
 
     AsyncMethod(EntityClass entityClass, String methodName) {
         super(entityClass, methodName);
@@ -38,12 +38,10 @@ public class AsyncMethod extends LivingroomMethod {
 
     private ParameterizedTypeName getAsyncTaskType() {
         ClassName asyncTaskClass = ClassName.get("android.os", "AsyncTask");
-        ParameterizedTypeName asyncTaskType =
-                ParameterizedTypeName.get(asyncTaskClass,
-                        this.hasParams()? getParams().get("item"):TypeName.get(Void.class),
-                        ClassName.get(Void.class),
-                        this.getReturnType());
-        return asyncTaskType;
+        return ParameterizedTypeName.get(asyncTaskClass,
+                this.hasParams()? getParams().get(ITEM_PARAM):TypeName.get(Void.class),
+                ClassName.get(Void.class),
+                this.getReturnType());
     }
 
     @Override
@@ -56,10 +54,10 @@ public class AsyncMethod extends LivingroomMethod {
             innerCode
                     .addStatement("new $N().execute($N)",
                             asyncTaskClassName(entityClass),
-                            this.hasParams() ? "item" : ""); // TODO Maybe pass Dao as parameter to AsyncTask;
+                            this.hasParams() ? ITEM_PARAM : "");
         else innerCode
                 .beginControlFlow("try")
-                .addStatement("return new $N().execute($N).get()", asyncTaskClassName(entityClass), hasParams() ? "item" : "")
+                .addStatement("return new $N().execute($N).get()", asyncTaskClassName(entityClass), hasParams() ? ITEM_PARAM : "")
                 .nextControlFlow("catch ($T e)", ClassName.get(Throwable.class))
                 .addStatement("e.printStackTrace()")
                 .endControlFlow()
@@ -103,7 +101,7 @@ public class AsyncMethod extends LivingroomMethod {
                 this.isReturnVoid()?"":"return",
                 entityClass.getRepositoryClassName().toLowerCase(),
                 this.getMethodName(),
-                this.hasParams() ? "item" : "");
+                this.hasParams() ? ITEM_PARAM : "");
 
         builder.addCode(innerCode.build());
         return builder;

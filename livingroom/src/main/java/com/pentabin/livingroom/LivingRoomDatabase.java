@@ -6,11 +6,11 @@ import android.util.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class LivingRoomDatabase {
+class LivingRoomDatabase {
     private static final String REPO_SUFFIX = "Repository";
     private static final String TAG = "LivingRoomDatabase";
     public static BasicRepository getRepository(Class entity, Application app) {
-        ClassLoader classLoader = LivingRoomDatabase.class.getClassLoader();
+    /*    ClassLoader classLoader = LivingRoomDatabase.class.getClassLoader();
         String className = entity.getName() + REPO_SUFFIX;
         Log.e(TAG, "Class Name -->" + className);
         Method method = null;
@@ -29,6 +29,7 @@ public class LivingRoomDatabase {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+     */
         return null;
     }
 }

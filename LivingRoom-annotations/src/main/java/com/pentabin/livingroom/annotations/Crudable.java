@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
 
  * Example:
  * <pre>
- * @Crudable
+ * {@link Crudable}
  * @Entity
  * public class Note extends BasicEntity {
  *     private String title;

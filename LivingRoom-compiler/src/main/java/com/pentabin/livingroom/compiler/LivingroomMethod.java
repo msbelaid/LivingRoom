@@ -17,15 +17,15 @@ import java.util.Map;
 
 import javax.lang.model.element.Modifier;
 
-public abstract class LivingroomMethod {
-    private String methodName;
+abstract class LivingroomMethod {
+    private final String methodName;
     private CodeBlock preCode;
     private Class annotation;
-    private EntityClass entityClass;
-    private Map<String, TypeName> params;
+    private final EntityClass entityClass;
+    private final Map<String, TypeName> params;
     private TypeName returnType;
 
-    static final String INSERT = "insert"; // TODO search every where
+    static final String INSERT = "insert";
     static final String DELETE = "delete";
     static final String SOFT_DELETE = "archive";
     static final String UPDATE = "update";
@@ -63,7 +63,7 @@ public abstract class LivingroomMethod {
         method.addParam(entityClass.getTypeName(), "item");
         method.setReturnType(TypeName.get(Long.class));
         method.setPreCode(CodeBlock.builder()
-                .addStatement("item.setCreated_at(new $T())", Date.class)//TODO CreatedAt string as constant!!
+                .addStatement("item.setCreated_at(new $T())", Date.class) //TODO CreatedAt string as constant!!
                 .build());
         return method;
     }
@@ -114,54 +114,53 @@ public abstract class LivingroomMethod {
         return new LiveMethod(methodName, where, entityClass, params, isList);
     }
 
-    public static List<LivingroomMethod> crud(EntityClass entityClass) {
+    static List<LivingroomMethod> crud(EntityClass entityClass) {
         List<LivingroomMethod> list = new ArrayList<>();
         list.add(insertMethod(entityClass));
         list.add(deleteMethod(entityClass));
         list.add(archiveMethod(entityClass));
         list.add(updateMethod(entityClass));
-        list.add(new LiveMethod(GET_ALL, "isDeleted = 0", entityClass, null)); // TODO create class GetAllMethod, GetAllById
-        String[] params = {"Long id"};
-        list.add(new LiveMethod(GET_BY_ID, "id = :id", entityClass, params, false));
+        list.add(selectAllMethod(entityClass));
+        list.add(selectByIdMethod(entityClass));
         return list;
     }
-    public String getMethodName() {
+    String getMethodName() {
         return methodName;
     }
 
-    public TypeName getReturnType() {
+    TypeName getReturnType() {
         return returnType;
     }
 
-    public boolean isReturnVoid() {
+    boolean isReturnVoid() {
         return returnType.equals(TypeName.get(Void.class));
     }
 
-    public void setPreCode(CodeBlock preCode) {
+    void setPreCode(CodeBlock preCode) {
         this.preCode = preCode;
     }
 
-    public CodeBlock getPreCode() {
+    CodeBlock getPreCode() {
         return preCode;
     }
 
-    public Class getAnnotation() {
+    Class getAnnotation() {
         return annotation;
     }
 
-    public void setAnnotation(Class annotation) {
+    void setAnnotation(Class annotation) {
         this.annotation = annotation;
     }
 
-    public void setReturnType(TypeName returnType) {
+    void setReturnType(TypeName returnType) {
         this.returnType = returnType;
     }
 
-    public Map<String, TypeName> getParams() {
+    Map<String, TypeName> getParams() {
         return params;
     }
 
-    public EntityClass getEntityClass() {
+    EntityClass getEntityClass() {
         return entityClass;
     }
 
@@ -194,7 +193,7 @@ public abstract class LivingroomMethod {
         params.put(name, type);
     }
 
-    public MethodSpec.Builder generateMethod(){
+    MethodSpec.Builder generateMethod(){
         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(this.getMethodName())
                 .addModifiers(Modifier.PUBLIC);
 
@@ -218,7 +217,7 @@ public abstract class LivingroomMethod {
 
     public abstract MethodSpec.Builder generateViewModelMethod(EntityClass entityClass);
 
-    public boolean hasParams() {
+    boolean hasParams() {
         return (params != null) && !params.isEmpty();
     }
 

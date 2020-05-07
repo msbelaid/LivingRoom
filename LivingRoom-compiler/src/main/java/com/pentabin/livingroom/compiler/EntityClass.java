@@ -16,19 +16,19 @@ import javax.lang.model.element.TypeElement;
 
 import static com.pentabin.livingroom.compiler.LivingRoomProcessor.dbClassName;
 
-public class EntityClass {
+class EntityClass {
     private static final String SUFFIX_DAO = "Dao";
     private static final String SUFFIX_REPO = "Repository";
     private static final String SUFFIX_VM = "ViewModel";
 
     private String packageName;
-    private String name;
-    private TypeName typeName;
-    private TypeElement typeElement;
-    private String daoClassName;
-    private String repositoryClassName;
-    private String viewModelClassName;
-    private Set<LivingroomMethod> methodsSet;
+    private final String name;
+    private final TypeName typeName;
+    private final TypeElement typeElement;
+    private final String daoClassName;
+    private final String repositoryClassName;
+    private final String viewModelClassName;
+    private final Set<LivingroomMethod> methodsSet;
 
     public EntityClass(TypeElement entityClass) {
         this.typeElement = entityClass;
