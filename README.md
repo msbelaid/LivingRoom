@@ -1,4 +1,4 @@
-# LivingRoom [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2Fmsbelaid%2FLivingRoom&via=%40msbelaid&text=LivingRoom%20generates%20all%20the%20boilerplate%20code%20for%20Android%20Room%20Persistence%20Library&hashtags=Android%2C%20AndroidDev)
+# LivingRoom [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2Fmsbelaid%2FLivingRoom&via=msbelaid&text=LivingRoom%20generates%20all%20the%20boilerplate%20code%20for%20Android%20Room%20Persistence%20Library&hashtags=Android%2C%20AndroidDev)
 LivingRoom is another layer above the Android [Room](https://developer.android.com/topic/libraries/architecture/room)
 persistence library. LivingRoom generates all the boilerplate [DAOs](https://developer.android.com/training/data-storage/room/accessing-data), Repositories and [ViewModels](https://developer.android.com/topic/libraries/architecture/viewmodel)
 
