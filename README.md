@@ -5,11 +5,8 @@ persistence library. LivingRoom generates all the boilerplate [DAOs](https://dev
 You just need to mark your entities with the appropriate annotations (`@Insertable`, `@Deletable`, `@Updatable`, `@SelectableAll` ...) to harness the power of [LivingRoom](https://github.com/msbelaid/LivingRoom).
 
 [![](https://jitpack.io/v/msbelaid/LivingRoom.svg)](https://jitpack.io/#msbelaid/LivingRoom)
-[![](https://img.shields.io/badge/Available%20On-ProductHunt-orange.svg')](https://www.producthunt.com/posts/livingroom)
 
-    <a href="https://www.producthunt.com/posts/easyflipviewpager">
-        <img src='https://img.shields.io/badge/Available%20On-ProductHunt-orange.svg'>
-    </a>
+[![](https://img.shields.io/badge/Available%20On-ProductHunt-orange.svg')](https://www.producthunt.com/posts/livingroom)
 
 ### Pros
 Using these annotations will generate boilerplate code for you.
