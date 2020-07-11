@@ -12,17 +12,18 @@ import com.squareup.javapoet.TypeName;
 import java.util.Iterator;
 import java.util.Map;
 
-public class LiveMethod extends LivingroomMethod {
+public class SelectMethod extends LivingroomMethod {
     private static final String LIST = "List";
     private final String where;
     private boolean isLiveData; // TODO can either be live or not
     private boolean isList;
 
-    LiveMethod(String methodName, String where, EntityClass entityClass, String[] params, boolean isList) {
+    SelectMethod(String methodName, String where, EntityClass entityClass, String[] params, boolean isList) {
         super(entityClass, methodName);
         this.isList = isList;
+        //this.isLiveData = isLiveData;
         this.where = where;
-        this.setReturnType(getLiveDataType());
+        this.setReturnType(getReturnType());
         this.setAnnotation(Query.class);
 
         if (params != null && params.length>=1) {
@@ -93,7 +94,7 @@ public class LiveMethod extends LivingroomMethod {
         return builder;
     }
 
-    ParameterizedTypeName getLiveDataType(){
+    ParameterizedTypeName getReturnType(){
         ClassName liveDataClass = ClassName.get("androidx.lifecycle", "LiveData");
         ClassName listClass = ClassName.get("java.util", LIST);
         return isList?

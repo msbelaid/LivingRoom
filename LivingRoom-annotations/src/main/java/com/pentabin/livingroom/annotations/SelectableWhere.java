@@ -18,4 +18,5 @@ public @interface SelectableWhere {
 
     String where();
     // TODO returns? List or One Live or not
+    boolean liveData = true;
 }

@@ -124,7 +124,7 @@ class EntityClass {
 
         for (LivingroomMethod m: this.getMethodsSet()) {
             if (!m.hasParams())
-                repositoryClass.addField(((LiveMethod)m).getLiveDataType(), m.getMethodName()+"List", Modifier.PRIVATE);// TODO test if live or not????
+                repositoryClass.addField(((SelectMethod)m).getReturnType(), m.getMethodName()+"List", Modifier.PRIVATE);// TODO test if live or not????
             repositoryClass.addMethod(m.generateRepositoryMethod(this).build());
             if (m instanceof AsyncMethod) {
                 repositoryClass.addType(
@@ -149,7 +149,7 @@ class EntityClass {
                 .addMethod(constructor);
         for (LivingroomMethod m: this.getMethodsSet()) {
             if (!m.hasParams()) {
-                viewModelClass.addField(((LiveMethod)m).getLiveDataType(), m.getMethodName()+"List", Modifier.PRIVATE);
+                viewModelClass.addField(((SelectMethod)m).getReturnType(), m.getMethodName()+"List", Modifier.PRIVATE);
             }
             viewModelClass.addMethod(m.generateViewModelMethod(this).build());
         }

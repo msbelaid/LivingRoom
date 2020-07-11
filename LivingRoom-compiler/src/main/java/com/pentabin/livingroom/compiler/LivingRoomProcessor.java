@@ -31,6 +31,7 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.FilerException;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
@@ -93,27 +94,18 @@ public class LivingRoomProcessor extends AbstractProcessor {
         parseSelectableAll(env);
         parseSelectableById(env);
 
-        for (Map.Entry<TypeElement, EntityClass> e: entitiesList.entrySet()) {
-            try {
-                generateCodeForEntity(e.getValue());
-                entities.add(e.getValue().getTypeName());
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
         try {
-            generateDatabaseClass();
+            generateClasses();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return false;
     }
 
     private void  parseAnnotation(Collection<? extends Element> elements, String method) {
         for (Element e: elements ) {
-            checkIfExtendsBasicEntity(e);
             checkIfAnnotatedWithEntity(e);
+            checkIfExtendsBasicEntity(e);
             if (entitiesList.containsKey(e)) {
                 EntityClass entityClass = entitiesList.get(e);
                 entitiesList.get(e).addMethod(LivingroomMethod.of(entityClass, method));
@@ -123,6 +115,19 @@ public class LivingRoomProcessor extends AbstractProcessor {
                 entityClass.addMethod(LivingroomMethod.of(entityClass, method));
                 entitiesList.put((TypeElement) e, entityClass);
             }
+        }
+    }
+
+    private void generateClasses() throws IOException {
+        for (Map.Entry<TypeElement, EntityClass> e: entitiesList.entrySet()) {
+                generateCodeForEntity(e.getValue());
+                entities.add(e.getValue().getTypeName());
+        }
+
+        try {
+            generateDatabaseClass();
+        } catch (FilerException e){
+
         }
     }
 
@@ -237,9 +242,14 @@ public class LivingRoomProcessor extends AbstractProcessor {
                 packageName = path.substring(0, lastDot);
             }
         }
-        generateDaoClass(clazz);
-        generateRepositoryClass(clazz);
-        generateViewModelClass(clazz);
+        try {
+            generateDaoClass(clazz);
+            generateRepositoryClass(clazz);
+            generateViewModelClass(clazz);
+        } catch (FilerException e) {
+
+        }
+
     }
 
     private void checkIfExtendsBasicEntity(Element annotatedElement){

@@ -111,7 +111,7 @@ abstract class LivingroomMethod {
     }
 
     static LivingroomMethod selectWhereMethod(EntityClass entityClass, String methodName, String where, String[] params, boolean isList) {
-        return new LiveMethod(methodName, where, entityClass, params, isList);
+        return new SelectMethod(methodName, where, entityClass, params, isList);
     }
 
     static List<LivingroomMethod> crud(EntityClass entityClass) {
